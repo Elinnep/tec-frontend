@@ -82,6 +82,27 @@ function App() {
       setCarregando(false)
     }
   }
+  // Função para reiniciar o torneio (Limpar Sessão)
+  const reiniciarTorneio = async () => {
+    // Confirmação para evitar cliques acidentais
+    if (!window.confirm("Atenção! Isto irá apagar todos os jogadores e votos. Deseja continuar?")) return;
+
+    try {
+      setCarregando(true)
+      const tx = await contrato.reiniciarTorneio()
+      
+      alert("A enviar transação de reinício... Aguarde.")
+      await tx.wait()
+      alert("Torneio reiniciado com sucesso! Sessão limpa.")
+      
+      carregarDadosIniciais() // Atualiza o ecrã para refletir o torneio vazio
+    } catch (err) {
+      console.error(err)
+      alert("Erro ao reiniciar. Apenas o organizador pode executar esta ação.")
+    } finally {
+      setCarregando(false)
+    }
+  }
 
   // 2. Inscrição (Aberto a todos, inclusive ao organizador)
   const inscreverJogador = async () => {
@@ -139,19 +160,32 @@ function App() {
 
       {conta && contrato && (
         <main>
-          {/* PAINEL DO ORGANIZADOR: Só aparece se a carteira for a do dono do contrato */}
+          {/* PAINEL DO ORGANIZADOR */}
           {conta === organizador && (
             <section className="card" style={{ border: '2px solid #4CAF50', backgroundColor: '#e8f5e9' }}>
               <h2 style={{ color: '#2e7d32' }}>👑 Painel do Organizador</h2>
-              <p>Adicione formatos para a comunidade votar:</p>
-              <input
-                type="text"
-                placeholder="Ex: Pauper, Standard..."
-                value={novoFormato}
-                onChange={(e) => setNovoFormato(e.target.value)}
-              />
-              <button onClick={adicionarFormato} disabled={carregando} style={{ backgroundColor: '#4CAF50', marginLeft: '10px' }}>
-                {carregando ? "Processando..." : "Adicionar Formato"}
+              <p>Gestão do Torneio:</p>
+              
+              <div style={{ marginBottom: '15px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Ex: Pauper, Standard..." 
+                  value={novoFormato}
+                  onChange={(e) => setNovoFormato(e.target.value)}
+                />
+                <button onClick={adicionarFormato} disabled={carregando} style={{ backgroundColor: '#4CAF50', marginLeft: '10px' }}>
+                  {carregando ? "A processar..." : "Adicionar Formato"}
+                </button>
+              </div>
+
+              {/* NOVO BOTÃO DE LIMPEZA */}
+              <hr style={{ borderColor: '#a5d6a7' }}/>
+              <button 
+                onClick={reiniciarTorneio} 
+                disabled={carregando} 
+                style={{ backgroundColor: '#d32f2f', color: 'white', marginTop: '10px' }}
+              >
+                {carregando ? "A processar..." : "⚠️ Limpar Sessão (Novo Torneio)"}
               </button>
             </section>
           )}
