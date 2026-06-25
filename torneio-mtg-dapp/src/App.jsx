@@ -14,6 +14,7 @@ function App() {
 
   // Estados para Inscrição
   const [nomeJogador, setNomeJogador] = useState("")
+  const [ultimoInscrito, setUltimoInscrito] = useState("")
 
   // Estados para Votação (DAO)
   const [opcoesFormato, setOpcoesFormato] = useState([])
@@ -90,11 +91,11 @@ function App() {
     try {
       setCarregando(true)
       const tx = await contrato.reiniciarTorneio()
-      
+
       alert("A enviar transação de reinício... Aguarde.")
       await tx.wait()
       alert("Torneio reiniciado com sucesso! Sessão limpa.")
-      
+
       carregarDadosIniciais() // Atualiza o ecrã para refletir o torneio vazio
     } catch (err) {
       console.error(err)
@@ -118,6 +119,8 @@ function App() {
       await tx.wait()
       alert("Inscrição realizada com sucesso!")
 
+      setUltimoInscrito(nomeJogador)
+      setNomeJogador("")
     } catch (err) {
       console.error(err)
       alert("Erro na inscrição. Você tem saldo? Já está inscrito?")
@@ -160,66 +163,81 @@ function App() {
 
       {conta && contrato && (
         <main>
-          {/* PAINEL DO ORGANIZADOR */}
-          {conta === organizador && (
-            <section className="card" style={{ border: '2px solid #4CAF50', backgroundColor: '#e8f5e9' }}>
-              <h2 style={{ color: '#2e7d32' }}>👑 Painel do Organizador</h2>
-              <p>Gestão do Torneio:</p>
-              
-              <div style={{ marginBottom: '15px' }}>
-                <input 
-                  type="text" 
-                  placeholder="Ex: Pauper, Standard..." 
-                  value={novoFormato}
-                  onChange={(e) => setNovoFormato(e.target.value)}
+          <div className="top-grid">
+            {conta === organizador && (
+              <section className="card organizer-card">
+                <div className="card-header">
+                  <h2>👑 Painel do Organizador</h2>
+                  <span className="status-chip">Organizador</span>
+                </div>
+                <p>Insira o nome do formato que será votado pelos inscritos.</p>
+
+                <div className="input-row">
+                  <input
+                    type="text"
+                    placeholder="Ex: Standard, Pauper, Legacy"
+                    value={novoFormato}
+                    onChange={(e) => setNovoFormato(e.target.value)}
+                  />
+                  <button onClick={adicionarFormato} disabled={carregando}>
+                    {carregando ? "A processar..." : "Adicionar Formato"}
+                  </button>
+                </div>
+
+                <button className="secondary-button" onClick={reiniciarTorneio} disabled={carregando}>
+                  {carregando ? "A processar..." : "⚠️ Reiniciar Torneio"}
+                </button>
+              </section>
+            )}
+
+            <section className="card signup-card">
+              <div className="card-header">
+                <h2>Inscrição</h2>
+                <span className="status-chip">Acesso aberto</span>
+              </div>
+              <p>Para se inscrever, informe seu nome e pague a taxa.</p>
+
+              <div className="input-row">
+                <input
+                  type="text"
+                  placeholder="Nome do Jogador"
+                  value={nomeJogador}
+                  onChange={(e) => setNomeJogador(e.target.value)}
                 />
-                <button onClick={adicionarFormato} disabled={carregando} style={{ backgroundColor: '#4CAF50', marginLeft: '10px' }}>
-                  {carregando ? "A processar..." : "Adicionar Formato"}
+                <button onClick={inscreverJogador} disabled={carregando}>
+                  {carregando ? "Processando..." : "Pagar Inscrição"}
                 </button>
               </div>
 
-              {/* NOVO BOTÃO DE LIMPEZA */}
-              <hr style={{ borderColor: '#a5d6a7' }}/>
-              <button 
-                onClick={reiniciarTorneio} 
-                disabled={carregando} 
-                style={{ backgroundColor: '#d32f2f', color: 'white', marginTop: '10px' }}
-              >
-                {carregando ? "A processar..." : "⚠️ Limpar Sessão (Novo Torneio)"}
-              </button>
+              <p className="info-note">
+                Taxa de inscrição: <strong>0.01 ETH</strong>
+              </p>
+
+              {ultimoInscrito && (
+                <div className="inscricao-summary">
+                  <strong>Último inscrito:</strong> {ultimoInscrito}
+                </div>
+              )}
+
+              {opcoesFormato.length === 0 && (
+                <p className="info-note">
+                  A aba de votação aparecerá depois que o organizador inserir os formatos.
+                </p>
+              )}
             </section>
-          )}
+          </div>
 
-          <hr />
+          {opcoesFormato.length > 0 && (
+            <section className="card vote-card">
+              <div className="card-header">
+                <h2>Votação de Formato</h2>
+                <span className="status-chip">DAO</span>
+              </div>
+              <p>Escolha o formato oficial deste torneio entre as opções disponíveis.</p>
 
-          {/* SEÇÃO 1: INSCRIÇÃO */}
-          <section className="card">
-            <h2>Inscrever-se no Torneio</h2>
-            <p>Taxa de inscrição: <strong>0.01 ETH</strong></p>
-            <input
-              type="text"
-              placeholder="Nome do Jogador"
-              value={nomeJogador}
-              onChange={(e) => setNomeJogador(e.target.value)}
-            />
-            <button onClick={inscreverJogador} disabled={carregando}>
-              {carregando ? "Processando..." : "Pagar Inscrição"}
-            </button>
-          </section>
-
-          <hr />
-
-          {/* SEÇÃO 2: VOTAÇÃO DAO */}
-          <section className="card">
-            <h2>DAO: Votação de Formato</h2>
-            <p>Escolha o formato oficial deste torneio:</p>
-
-            {opcoesFormato.length === 0 ? (
-              <p>Nenhuma opção de formato cadastrada ainda.</p>
-            ) : (
-              <div className="opcoes-grid" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginTop: '15px' }}>
+              <div className="opcoes-grid">
                 {opcoesFormato.map((opcao, index) => (
-                  <div key={index} className="opcao-card" style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
+                  <div key={index} className="opcao-card">
                     <h3>{opcao.nome}</h3>
                     <p>Votos: <strong>{opcao.votos.toString()}</strong></p>
                     <button onClick={() => votar(index)} disabled={carregando}>
@@ -228,8 +246,8 @@ function App() {
                   </div>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          )}
         </main>
       )}
     </div>
