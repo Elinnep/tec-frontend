@@ -151,12 +151,14 @@ function App() {
   return (
     <div className="App">
       <header>
-        <h1>Torneio de Magic: The Gathering (DAO)</h1>
-        {!conta ? (
-          <button onClick={conectarCarteira}>Conectar MetaMask</button>
-        ) : (
-          <p>🟢 Carteira Conectada: {conta.substring(0, 6)}...{conta.substring(38)}</p>
-        )}
+        <h1>DApp Organizador de Torneios</h1>
+        <div className="wallet-status">
+          {!conta ? (
+            <button onClick={conectarCarteira}>Conectar MetaMask</button>
+          ) : (
+            <p>Carteira Conectada: {conta.substring(0, 6)}...{conta.substring(38)}</p>
+          )}
+        </div>
       </header>
 
       {erro && <p style={{ color: 'red' }}>{erro}</p>}
@@ -167,7 +169,7 @@ function App() {
             {conta === organizador && (
               <section className="card organizer-card">
                 <div className="card-header">
-                  <h2>👑 Painel do Organizador</h2>
+                  <h2>Painel do Organizador</h2>
                   <span className="status-chip">Organizador</span>
                 </div>
                 <p>Insira o nome do formato que será votado pelos inscritos.</p>
@@ -185,7 +187,7 @@ function App() {
                 </div>
 
                 <button className="secondary-button" onClick={reiniciarTorneio} disabled={carregando}>
-                  {carregando ? "A processar..." : "⚠️ Reiniciar Torneio"}
+                  {carregando ? "A processar..." : "Reiniciar Torneio"}
                 </button>
               </section>
             )}
